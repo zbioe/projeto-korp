@@ -7,18 +7,24 @@ import (
 	"time"
 )
 
-const DefaultNome = "Projeto Korp"
-const DefaultAddr = ":8080"
+const nome = "Projeto Korp"
+const defaultAddr = ":8080"
 
 type Response struct {
-	Nome    string    `json:"nome"`
-	Horario time.Time `json:"horario"`
+	Nome    string  `json:"nome"`
+	Horario horario `json:"horario"`
+}
+
+type horario time.Time
+
+func (h horario) MarshalText() ([]byte, error) {
+	return time.Time(h).UTC().AppendFormat(nil, time.RFC3339), nil
 }
 
 func NewResponse() Response {
 	return Response{
-		Nome:    DefaultNome,
-		Horario: time.Now().UTC(),
+		Nome:    nome,
+		Horario: horario(time.Now()),
 	}
 }
 
@@ -31,8 +37,9 @@ func main() {
 		}
 	})
 	s := http.Server{
-		Handler: m,
-		Addr:    DefaultAddr,
+		Handler:           m,
+		Addr:              defaultAddr,
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 	log.Fatal(s.ListenAndServe())
 }
