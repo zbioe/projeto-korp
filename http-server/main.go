@@ -10,7 +10,7 @@ import (
 const nome = "Projeto Korp"
 const defaultAddr = ":8080"
 
-type Response struct {
+type response struct {
 	Nome    string  `json:"nome"`
 	Horario horario `json:"horario"`
 }
@@ -21,8 +21,8 @@ func (h horario) MarshalText() ([]byte, error) {
 	return time.Time(h).UTC().AppendFormat(nil, time.RFC3339), nil
 }
 
-func NewResponse() Response {
-	return Response{
+func newResponse() response {
+	return response{
 		Nome:    nome,
 		Horario: horario(time.Now()),
 	}
@@ -32,7 +32,7 @@ func main() {
 	m := http.NewServeMux()
 	m.HandleFunc("GET /projeto-korp", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(NewResponse()); err != nil {
+		if err := json.NewEncoder(w).Encode(newResponse()); err != nil {
 			log.Printf("encode response: %s", err)
 		}
 	})
