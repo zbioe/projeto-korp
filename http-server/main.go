@@ -7,8 +7,10 @@ import (
 	"time"
 )
 
-const nome = "Projeto Korp"
-const defaultAddr = ":8080"
+const (
+	nome        = "Projeto Korp"
+	defaultAddr = ":8080"
+)
 
 type response struct {
 	Nome    string  `json:"nome"`
