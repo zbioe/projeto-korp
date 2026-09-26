@@ -23,23 +23,29 @@ func (h horario) MarshalText() ([]byte, error) {
 	return time.Time(h).UTC().AppendFormat(nil, time.RFC3339), nil
 }
 
-func newResponse() response {
+func newResponse(now time.Time) response {
 	return response{
 		Nome:    nome,
-		Horario: horario(time.Now()),
+		Horario: horario(now),
 	}
 }
 
-func main() {
+func handleProjetoKorp(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(newResponse(time.Now())); err != nil {
+		log.Printf("encode response: %v", err)
+	}
+}
+
+func newMux() *http.ServeMux {
 	m := http.NewServeMux()
-	m.HandleFunc("GET /projeto-korp", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(newResponse()); err != nil {
-			log.Printf("encode response: %s", err)
-		}
-	})
-	s := http.Server{
-		Handler:           m,
+	m.HandleFunc("GET /projeto-korp", handleProjetoKorp)
+	return m
+}
+
+func main() {
+	s := &http.Server{
+		Handler:           newMux(),
 		Addr:              defaultAddr,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
