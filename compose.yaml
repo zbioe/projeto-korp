@@ -1,0 +1,27 @@
+services:
+  http-server-projeto-korp:
+    image: http-server-projeto-korp
+    container_name: http-server-projeto-korp
+    build: ./http-server
+    restart: unless-stopped
+    networks:
+      - projeto-korp
+
+  nginx:
+    image: nginx:1.30-alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - "./nginx/conf.d:/etc/nginx/conf.d:ro"
+    depends_on:
+      - http-server-projeto-korp
+    networks:
+      - projeto-korp
+
+networks:
+  projeto-korp:
+    name: projeto-korp
+    driver: bridge
+    # quando o ansible entrar, vai virar external
+    # external: true
