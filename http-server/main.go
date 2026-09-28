@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -32,6 +33,23 @@ func newResponse(now time.Time) response {
 	}
 }
 
+type metrics struct {
+	requests *prometheus.CounterVec
+}
+
+func newMetrics(reg prometheus.Registerer) *metrics {
+	m := &metrics{
+		requests: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "http_requests_total",
+				Help: "número total de requests HTTP",
+			},
+			[]string{"code", "method"}),
+	}
+	reg.MustRegister(m.requests)
+	return m
+}
+
 func handleProjetoKorp(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(newResponse(time.Now())); err != nil {
@@ -39,11 +57,14 @@ func handleProjetoKorp(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-func newMux() *http.ServeMux {
-	m := http.NewServeMux()
-	m.HandleFunc("GET /projeto-korp", handleProjetoKorp)
-	m.Handle("GET /metrics", promhttp.Handler())
-	return m
+func newMux() http.Handler {
+	reg := prometheus.NewRegistry()
+	m := newMetrics(reg)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /projeto-korp", handleProjetoKorp)
+	mux.Handle("GET /metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
+	return promhttp.InstrumentHandlerCounter(m.requests, mux)
 }
 
 func main() {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -11,8 +12,9 @@ import (
 func TestRoutes(t *testing.T) {
 	t.Parallel()
 	const (
-		textType = "text/plain; charset=utf-8"
-		jsonType = "application/json"
+		textType   = "text/plain; charset=utf-8"
+		jsonType   = "application/json"
+		metricType = "text/plain; version=0.0.4; charset=utf-8; escaping=underscores"
 	)
 	tests := map[string]struct {
 		method, target string
@@ -24,7 +26,10 @@ func TestRoutes(t *testing.T) {
 		"post projeto-korp":      {http.MethodPost, "/projeto-korp", http.StatusMethodNotAllowed, textType},
 		"put projeto-korp":       {http.MethodPut, "/projeto-korp", http.StatusMethodNotAllowed, textType},
 		"get projeto-korp slash": {http.MethodGet, "/projeto-korp/", http.StatusNotFound, textType},
-		"get metrics":            {http.MethodGet, "/metrics", http.StatusOK, "text/plain; version=0.0.4; charset=utf-8; escaping=underscores"},
+		"get metrics":            {http.MethodGet, "/metrics", http.StatusOK, metricType},
+		"head metrics":           {http.MethodHead, "/metrics", http.StatusOK, metricType},
+		"post metrics":           {http.MethodPost, "/metrics", http.StatusMethodNotAllowed, textType},
+		"get metrics slash":      {http.MethodGet, "/metrics/", http.StatusNotFound, textType},
 		"get root path":          {http.MethodGet, "/", http.StatusNotFound, textType},
 		"get unknown path":       {http.MethodGet, "/unknownpath", http.StatusNotFound, textType},
 	}
@@ -70,5 +75,26 @@ func TestBody(t *testing.T) {
 				t.Errorf("body = %s, want %s", got, want)
 			}
 		})
+	}
+}
+
+func TestMetrics(t *testing.T) {
+	t.Parallel()
+	mux := newMux()
+	for _, method := range []string{http.MethodGet, http.MethodGet, http.MethodPost} {
+		mux.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(method, "/projeto-korp", nil))
+	}
+
+	rec := httptest.NewRecorder()
+
+	mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/metrics", nil))
+
+	for _, want := range []string{
+		`http_requests_total{code="200",method="get"} 2`,
+		`http_requests_total{code="405",method="post"} 1`,
+	} {
+		if !strings.Contains(rec.Body.String(), want) {
+			t.Errorf("/metrics does not contain %q", want)
+		}
 	}
 }
