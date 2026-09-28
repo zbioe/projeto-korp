@@ -24,6 +24,7 @@ func TestRoutes(t *testing.T) {
 		"post projeto-korp":      {http.MethodPost, "/projeto-korp", http.StatusMethodNotAllowed, textType},
 		"put projeto-korp":       {http.MethodPut, "/projeto-korp", http.StatusMethodNotAllowed, textType},
 		"get projeto-korp slash": {http.MethodGet, "/projeto-korp/", http.StatusNotFound, textType},
+		"get metrics":            {http.MethodGet, "/metrics", http.StatusOK, "text/plain; version=0.0.4; charset=utf-8; escaping=underscores"},
 		"get root path":          {http.MethodGet, "/", http.StatusNotFound, textType},
 		"get unknown path":       {http.MethodGet, "/unknownpath", http.StatusNotFound, textType},
 	}

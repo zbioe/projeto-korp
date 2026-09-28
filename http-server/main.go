@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -40,6 +42,7 @@ func handleProjetoKorp(w http.ResponseWriter, _ *http.Request) {
 func newMux() *http.ServeMux {
 	m := http.NewServeMux()
 	m.HandleFunc("GET /projeto-korp", handleProjetoKorp)
+	m.Handle("GET /metrics", promhttp.Handler())
 	return m
 }
 
