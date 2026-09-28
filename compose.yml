@@ -1,13 +1,17 @@
+x-defaults: &defaults
+  restart: unless-stopped
+  networks:
+    - projeto-korp
+
 services:
   http-server-projeto-korp:
+    <<: *defaults
     image: http-server-projeto-korp
     container_name: http-server-projeto-korp
     build: ./http-server
-    restart: unless-stopped
-    networks:
-      - projeto-korp
 
   nginx:
+    <<: *defaults
     image: nginx:1.30-alpine
     container_name: nginx
     ports:
@@ -16,8 +20,15 @@ services:
       - "./nginx/conf.d:/etc/nginx/conf.d:ro"
     depends_on:
       - http-server-projeto-korp
-    networks:
-      - projeto-korp
+
+  prometheus:
+    <<: *defaults
+    image: prom/prometheus:v3.15.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - "./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
 
 networks:
   projeto-korp:
