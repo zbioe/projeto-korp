@@ -30,6 +30,10 @@ func TestRoutes(t *testing.T) {
 		"head metrics":           {http.MethodHead, "/metrics", http.StatusOK, metricType},
 		"post metrics":           {http.MethodPost, "/metrics", http.StatusMethodNotAllowed, textType},
 		"get metrics slash":      {http.MethodGet, "/metrics/", http.StatusNotFound, textType},
+		"get healthz":            {http.MethodGet, "/healthz", http.StatusOK, ""},
+		"head healthz":           {http.MethodHead, "/healthz", http.StatusOK, ""},
+		"post healthz":           {http.MethodPost, "/healthz", http.StatusMethodNotAllowed, textType},
+		"get healthz slash":      {http.MethodGet, "/healthz/", http.StatusNotFound, textType},
 		"get root path":          {http.MethodGet, "/", http.StatusNotFound, textType},
 		"get unknown path":       {http.MethodGet, "/unknownpath", http.StatusNotFound, textType},
 	}
