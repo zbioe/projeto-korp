@@ -28,7 +28,7 @@ func TestRoutes(t *testing.T) {
 		"get projeto-korp slash": {http.MethodGet, "/projeto-korp/", http.StatusNotFound, textType},
 		"get metrics":            {http.MethodGet, "/metrics", http.StatusOK, metricType},
 		"head metrics":           {http.MethodHead, "/metrics", http.StatusOK, metricType},
-		"post metrics":           {http.MethodPost, "/metrics", http.StatusMethodNotAllowed, textType},
+		"post metrics":           {http.MethodPost, "/metrics", http.StatusNotFound, textType},
 		"get metrics slash":      {http.MethodGet, "/metrics/", http.StatusNotFound, textType},
 		"get healthz":            {http.MethodGet, "/healthz", http.StatusOK, ""},
 		"head healthz":           {http.MethodHead, "/healthz", http.StatusOK, ""},
@@ -42,7 +42,7 @@ func TestRoutes(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			rec := httptest.NewRecorder()
-			newMux().ServeHTTP(rec, httptest.NewRequest(tc.method, tc.target, nil))
+			newHandler().ServeHTTP(rec, httptest.NewRequest(tc.method, tc.target, nil))
 
 			if rec.Code != tc.wantCode {
 				t.Errorf("status = %d, want %d", rec.Code, tc.wantCode)
@@ -84,7 +84,7 @@ func TestBody(t *testing.T) {
 
 func TestMetrics(t *testing.T) {
 	t.Parallel()
-	mux := newMux()
+	mux := newHandler()
 	for _, method := range []string{http.MethodGet, http.MethodGet, http.MethodPost} {
 		mux.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(method, "/projeto-korp", nil))
 	}

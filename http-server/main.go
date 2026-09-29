@@ -61,20 +61,23 @@ func handleHealthz(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func newMux() http.Handler {
+func newHandler() http.Handler {
 	reg := prometheus.NewRegistry()
 	m := newMetrics(reg)
 
+	app := http.NewServeMux()
+	app.HandleFunc("GET /projeto-korp", handleProjetoKorp)
+	app.HandleFunc("GET /healthz", handleHealthz)
+
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /projeto-korp", handleProjetoKorp)
-	mux.HandleFunc("GET /healthz", handleHealthz)
 	mux.Handle("GET /metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
-	return promhttp.InstrumentHandlerCounter(m.requests, mux)
+	mux.Handle("/", promhttp.InstrumentHandlerCounter(m.requests, app))
+	return mux
 }
 
 func main() {
 	s := &http.Server{
-		Handler:           newMux(),
+		Handler:           newHandler(),
 		Addr:              defaultAddr,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
