@@ -67,10 +67,10 @@ func newHandler() http.Handler {
 
 	app := http.NewServeMux()
 	app.HandleFunc("GET /projeto-korp", handleProjetoKorp)
-	app.HandleFunc("GET /healthz", handleHealthz)
 
 	mux := http.NewServeMux()
 	mux.Handle("GET /metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
+	mux.HandleFunc("GET /healthz", handleHealthz)
 	mux.Handle("/", promhttp.InstrumentHandlerCounter(m.requests, app))
 	return mux
 }
