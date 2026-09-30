@@ -2,3 +2,4 @@ terraform/.terraform
 terraform/terraform.tfstate*
 terraform/.terraform.tfstate.lock.info
 terraform/inventory.ini
+.ansible

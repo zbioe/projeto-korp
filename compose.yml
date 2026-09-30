@@ -50,9 +50,7 @@ services:
 networks:
   projeto-korp:
     name: projeto-korp
-    driver: bridge
-    # quando o ansible entrar, vai virar external
-    # external: true
+    external: true
 
 volumes:
   grafana-data:

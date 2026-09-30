@@ -1,0 +1,73 @@
+- name: Deploy do projeto-korp
+  hosts: all
+  become: true
+
+  vars:
+    project_dir: /opt/projeto-korp
+    project_files:
+      - compose.yml
+      - http-server
+      - nginx
+      - prometheus
+      - grafana
+    docker_uri: "https://download.docker.com/linux/{{ ansible_distribution | lower }}"
+
+  tasks:
+    - name: Verificar se é da família Debian
+      ansible.builtin.assert:
+        that: ansible_os_family == "Debian"
+        fail_msg: "Suporte apenas para Debian e Ubuntu"
+
+    - name: Adicionar repositório do Docker
+      ansible.builtin.deb822_repository:
+        name: docker
+        uris: "{{ docker_uri }}"
+        suites: "{{ ansible_distribution_release }}"
+        components: stable
+        signed_by: "{{ docker_uri }}/gpg"
+
+    - name: Instalar o Docker
+      ansible.builtin.apt:
+        update_cache: true
+        name:
+          - docker-ce
+          - docker-compose-plugin
+          - docker-buildx-plugin
+
+    - name: Habilitar serviço do Docker
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Criar rede no docker do projeto korp
+      community.docker.docker_network:
+        name: projeto-korp
+        driver: bridge
+
+    - name: Copiar projeto
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../{{ item }}"
+        dest: "{{ project_dir }}/"
+        mode: u=rwX,go=rX
+      loop: "{{ project_files }}"
+
+    - name: Subir o Docker Compose
+      community.docker.docker_compose_v2:
+        project_src: "{{ project_dir }}"
+        build: always
+
+    - name: Aguardar serviço ficar disponível
+      ansible.builtin.uri:
+        url: http://localhost/healthz
+      register: health
+      until: health is succeeded
+
+    - name: Capturar retorno do serviço
+      ansible.builtin.uri:
+        url: http://localhost/projeto-korp
+      register: response
+
+    - name: Exibir resposta do serviço
+      ansible.builtin.debug:
+        msg: "{{ response.json }}"
